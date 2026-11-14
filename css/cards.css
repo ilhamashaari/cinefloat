@@ -1,0 +1,133 @@
+/* ==========================================================================
+   cards.css — poster cards (float, tilt, shine), placeholders, skeletons,
+   carousels and the "ghost" used while you drag a poster.
+
+   Layers of one card (each layer owns ONE kind of motion, so they never fight):
+     .card            layout box, receives clicks / keyboard focus
+     └ .card__float   idle drift (CSS keyframes) + cursor parallax   (transform / translate)
+         └ .card__tilt  3D tilt + hover scale (set by JS)             (transform)
+             └ .card__poster  image, rating badge, moving shine
+   ========================================================================== */
+.card { position: relative; width: var(--card-w); flex: none; outline: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.card.enter { animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(min(var(--i, 0), 14) * 45ms); }
+.grid .card { width: 100%; }
+.card[data-depth="1"] { --par-k: 5; }
+.card[data-depth="2"] { --par-k: 9; }
+.card[data-depth="3"] { --par-k: 14; }
+.card__float {
+  animation: bob var(--float-dur, 8s) ease-in-out var(--float-delay, 0s) infinite;
+  translate: calc(var(--par-x, 0) * var(--par-k, 8) * 1px) calc(var(--par-y, 0) * var(--par-k, 8) * 1px);
+}
+.card[data-depth="1"] .card__float { scale: 0.955; }
+.card[data-depth="2"] .card__float { scale: 0.98; }
+.card:not([data-visible]) .card__float { animation-play-state: paused; }   /* off-screen cards stand still */
+.card__tilt { position: relative; will-change: transform; transform-style: flat; }
+.card__tilt::before {                                                      /* soft coloured glow, faded in on hover */
+  content: ""; position: absolute; inset: 4px; z-index: -1; border-radius: 18px; opacity: 0; transition: opacity 0.35s;
+  box-shadow: 0 0 46px 8px var(--glow, rgba(139, 123, 255, 0.55));
+}
+.card.is-hover .card__tilt::before, .card:focus-visible .card__tilt::before { opacity: 1; }
+
+.card__poster {
+  position: relative; aspect-ratio: 2 / 3; border-radius: 16px; overflow: hidden; container-type: inline-size;
+  background: var(--chip); box-shadow: 0 16px 34px -16px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+.card[data-depth="3"] .card__poster { box-shadow: 0 30px 50px -18px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.card:focus-visible .card__poster { outline: 2px solid var(--accent-3); outline-offset: 4px; }
+.card__img { width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; opacity: 0; transition: opacity 0.4s; }
+.card__img.is-loaded { opacity: 1; }
+.card.is-source .card__poster, .card.is-lifted .card__poster { opacity: 0; }  /* the poster "left" this spot (opacity only) */
+
+.card__shine {                       /* a big soft light that is moved with transform to follow the pointer */
+  position: absolute; left: 0; top: 0; width: 200%; aspect-ratio: 1; pointer-events: none; opacity: 0; transition: opacity 0.3s; will-change: transform;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.13) 26%, transparent 55%);
+}
+.card.is-hover .card__shine { opacity: 1; }
+
+.card__rate { position: absolute; left: 9px; top: 9px; display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px 4px 7px; border-radius: 999px; font: 800 0.76rem/1 system-ui, sans-serif; color: #fff; background: rgba(8, 8, 18, 0.68); border: 1px solid rgba(255, 255, 255, 0.16); }
+.card__rate .ico { width: 0.95em; height: 0.95em; fill: currentColor; stroke: none; }
+.card__rate[data-tier="high"] .ico { color: var(--good); }
+.card__rate[data-tier="mid"] .ico { color: var(--warn); }
+.card__rate[data-tier="low"] .ico { color: var(--bad); }
+.card__rate[data-tier="none"] .ico { display: none; }
+
+.card__marks { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; }
+.mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; background: rgba(8, 8, 18, 0.78); border: 1px solid rgba(255, 255, 255, 0.18); opacity: 0; transform: scale(0.5); transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1), opacity 0.2s; }
+.mark .ico { width: 0.95rem; height: 0.95rem; }
+.mark--watch .ico { color: var(--accent-3); fill: currentColor; }
+.mark--fav .ico { color: var(--accent-2); fill: currentColor; }
+.card[data-watch] .mark--watch, .card[data-fav] .mark--fav { opacity: 1; transform: none; }
+
+.card__meta { padding: 11px 4px 0; }
+.card__title { font-size: 0.95rem; font-weight: 650; line-height: 1.25; letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card__sub { margin-top: 3px; font-size: 0.8rem; color: var(--text-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Stylish placeholder (used whenever poster_path is null) ---------- */
+.ph {
+  position: absolute; inset: 0; display: grid; place-items: center; padding: 14%; text-align: center; overflow: hidden; container-type: inline-size;
+  background:
+    radial-gradient(120% 80% at 15% 0%, hsl(var(--h, 260) 85% 58% / 0.55), transparent 60%),
+    linear-gradient(165deg, hsl(var(--h, 260) 55% 24%), hsl(calc(var(--h, 260) + 50) 60% 9%));
+}
+.ph::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255, 255, 255, 0.035) 22px 23px); }
+/* The placeholder's colour is picked by a data attribute (36 hues, chosen from a hash of the title).
+   Using an attribute instead of style="" matters: our CSP blocks inline styles, and this markup is
+   copied around as text (suggestions, library, the flying poster), which would drop a style attribute. */
+.ph[data-h="0"]{--h:0} .ph[data-h="1"]{--h:10} .ph[data-h="2"]{--h:20} .ph[data-h="3"]{--h:30} .ph[data-h="4"]{--h:40} .ph[data-h="5"]{--h:50}
+.ph[data-h="6"]{--h:60} .ph[data-h="7"]{--h:70} .ph[data-h="8"]{--h:80} .ph[data-h="9"]{--h:90} .ph[data-h="10"]{--h:100} .ph[data-h="11"]{--h:110}
+.ph[data-h="12"]{--h:120} .ph[data-h="13"]{--h:130} .ph[data-h="14"]{--h:140} .ph[data-h="15"]{--h:150} .ph[data-h="16"]{--h:160} .ph[data-h="17"]{--h:170}
+.ph[data-h="18"]{--h:180} .ph[data-h="19"]{--h:190} .ph[data-h="20"]{--h:200} .ph[data-h="21"]{--h:210} .ph[data-h="22"]{--h:220} .ph[data-h="23"]{--h:230}
+.ph[data-h="24"]{--h:240} .ph[data-h="25"]{--h:250} .ph[data-h="26"]{--h:260} .ph[data-h="27"]{--h:270} .ph[data-h="28"]{--h:280} .ph[data-h="29"]{--h:290}
+.ph[data-h="30"]{--h:300} .ph[data-h="31"]{--h:310} .ph[data-h="32"]{--h:320} .ph[data-h="33"]{--h:330} .ph[data-h="34"]{--h:340} .ph[data-h="35"]{--h:350}
+.ph__film { position: absolute; top: 0; bottom: 0; width: 6%; background: repeating-linear-gradient(180deg, transparent 0 9px, rgba(255, 255, 255, 0.22) 9px 15px, transparent 15px 24px); }
+.ph__film--l { left: 3%; }
+.ph__film--r { right: 3%; }
+.ph__letter { position: absolute; font: 800 70cqw/1 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #fff; opacity: 0.14; }
+.ph__title { position: relative; font-weight: 700; font-size: 9cqw; line-height: 1.25; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.ph__sub { display: block; margin-top: 8px; font-size: 6cqw; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.65; font-weight: 600; }
+
+/* ---------- Skeleton loaders (shimmer = transform only) ---------- */
+.sk { position: relative; overflow: hidden; background: var(--chip); }
+.sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.13) 50%, transparent 80%); transform: translateX(-100%); animation: shimmer 1.6s ease-in-out infinite; }
+[data-theme="light"] .sk::after { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.8) 50%, transparent 80%); }
+@keyframes shimmer { to { transform: translateX(100%); } }
+.card--skeleton { pointer-events: none; }
+.card--skeleton .card__poster { box-shadow: none; }
+.sk--line { height: 12px; border-radius: 6px; margin-top: 10px; }
+.sk--line + .sk--line { width: 55%; margin-top: 8px; height: 10px; }
+
+/* ---------- Carousel (the track is moved with transform by carousel.js) ---------- */
+.carousel { position: relative; }
+.carousel__viewport { overflow: hidden; padding: 32px 0 38px; margin: -32px 0 -38px; touch-action: pan-y; cursor: grab; }
+.carousel.is-panning .carousel__viewport { cursor: grabbing; }
+.carousel__track { position: relative; display: flex; gap: 22px; width: max-content; padding: 0 var(--gutter); will-change: transform; }
+.carousel--chips .carousel__viewport { padding: 4px 0; margin: 0; }
+.carousel--chips .carousel__track { gap: 8px; padding: 0; }
+/* The genre row hints that it scrolls: a hidden end fades out (carousel.js sets data-at-start / data-at-end). */
+.carousel--chips .carousel__viewport {
+  --fade-l: 0px; --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+}
+.carousel--chips[data-at-start="false"] .carousel__viewport { --fade-l: 40px; }
+.carousel--chips[data-at-end="false"] .carousel__viewport { --fade-r: 40px; }
+.carousel--tight .carousel__track { padding: 0; }
+.carousel__nav {
+  position: absolute; z-index: 6; top: calc(50% - 46px); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--glass-strong); border: 1px solid var(--glass-border); box-shadow: var(--shadow); opacity: 0; transform: scale(0.82);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.carousel__nav--prev { left: 10px; }
+.carousel__nav--next { right: 10px; }
+.carousel:hover .carousel__nav, .carousel__nav:focus-visible { opacity: 1; transform: none; }
+.carousel__nav[disabled] { opacity: 0 !important; pointer-events: none; }
+@media (hover: none) { .carousel__nav { display: none; } }
+
+/* ---------- Ghost: the lifted copy of a poster while it is dragged / thrown ---------- */
+.ghost-layer { position: fixed; inset: 0; z-index: 900; pointer-events: none; }
+.ghost { position: absolute; left: 0; top: 0; border-radius: 16px; will-change: transform, opacity; box-shadow: 0 40px 70px -22px rgba(0, 0, 0, 0.85), 0 0 50px -6px var(--glow, rgba(139, 123, 255, 0.6)); }
+.ghost .card__poster { width: 100%; height: 100%; aspect-ratio: auto; box-shadow: none; opacity: 1; }
+.ghost .card__shine { display: none; }
+/* The poster copy that flies between a card and the detail panel (see panel.js) */
+.flyer { position: absolute; z-index: 5; overflow: hidden; border-radius: 20px; pointer-events: none; container-type: inline-size; will-change: transform; box-shadow: 0 34px 70px -22px rgba(0, 0, 0, 0.9); }
+.flyer img { width: 100%; height: 100%; object-fit: cover; }

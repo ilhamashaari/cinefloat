@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-motion="full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <!-- Content Security Policy: the page may only talk to TMDB, load TMDB images and embed YouTube.
+       (No inline scripts or inline style="" attributes are used anywhere in this project.) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org; connect-src https://api.themoviedb.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; base-uri 'none'; form-action 'none'">
+  <title>CineFloat — movie search</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/panel.css">
+  <script src="js/boot.js"></script>
+</head>
+<body>
+  <!-- Icon sprite: every icon below is used with <svg><use href="#i-name"/></svg> -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-7-4.350-9.500-9.200C.9 8.600 2.900 5 6.500 5c2 0 3.700 1.100 5.500 3.200C13.800 6.100 15.500 5 17.500 5c3.600 0 5.600 3.600 4 6.800C19 16.650 12 21 12 21z"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.500L5 21V4a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.500l2.900 6 6.600.9-4.800 4.600 1.200 6.500L12 17.400l-5.900 3.100 1.200-6.500L2.500 9.400l6.600-.9z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.500" y="3.500" width="17" height="17" rx="4"/><path d="M8.500 8.500h.01M15.500 8.500h.01M12 12h.01M8.500 15.500h.01M15.500 15.500h.01"/></symbol>
+    <symbol id="i-mood" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14.500c1 1.500 2.300 2.200 4 2.200s3-.7 4-2.200M9 9.500h.01M15 9.500h.01"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.900 4.900l1.400 1.400M17.700 17.700l1.400 1.400M2 12h2M20 12h2M4.900 19.100l1.400-1.400M17.700 6.300l1.400-1.400"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.500A8.500 8.500 0 0 1 9.500 4 8.500 8.500 0 1 0 20 14.500z"/></symbol>
+    <symbol id="i-amoled" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.500"/><path d="M12 3.500a8.500 8.500 0 0 1 0 17z" class="fill"/></symbol>
+    <symbol id="i-motion" viewBox="0 0 24 24"><path d="M3 12c3-6 6-6 9 0s6 6 9 0"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></symbol>
+  </svg>
+
+  <!-- Animated colour-shifting background (two layers that cross-fade) -->
+  <div class="bg" id="bg" aria-hidden="true">
+    <div class="bg__layer is-on"><i class="bg__blob b1"></i><i class="bg__blob b2"></i><i class="bg__blob b3"></i></div>
+    <div class="bg__layer"><i class="bg__blob b1"></i><i class="bg__blob b2"></i><i class="bg__blob b3"></i></div>
+    <div class="bg__grain"></div>
+    <div class="bg__vignette"></div>
+  </div>
+
+  <!-- Custom cursor (only switched on for mouse / trackpad) -->
+  <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor__ring"><span class="cursor__label"></span></span><span class="cursor__dot"></span></div>
+
+  <a class="skip" href="#view">Skip to content</a>
+  <div class="banner" id="banner" role="status" hidden>You are offline. Showing saved results where possible.</div>
+
+  <header class="topbar glass" id="topbar">
+    <a class="brand" href="#" id="brand" data-magnetic aria-label="CineFloat home"><svg class="ico"><use href="#i-film"/></svg><span>Cine<b>Float</b></span></a>
+    <nav class="topbar__nav" aria-label="Your library">
+      <button class="pill" id="btn-watchlist" type="button" data-magnetic><svg class="ico"><use href="#i-bookmark"/></svg><span>Watchlist</span><em class="count" id="count-watchlist">0</em></button>
+      <button class="pill" id="btn-favorites" type="button" data-magnetic><svg class="ico"><use href="#i-heart"/></svg><span>Favorites</span><em class="count" id="count-favorites">0</em></button>
+    </nav>
+    <div class="topbar__tools">
+      <div class="seg" role="radiogroup" aria-label="Theme">
+        <button type="button" role="radio" aria-checked="true" data-theme-btn="dark" title="Dark"><svg class="ico"><use href="#i-moon"/></svg></button>
+        <button type="button" role="radio" aria-checked="false" data-theme-btn="light" title="Light"><svg class="ico"><use href="#i-sun"/></svg></button>
+        <button type="button" role="radio" aria-checked="false" data-theme-btn="amoled" title="AMOLED black"><svg class="ico"><use href="#i-amoled"/></svg></button>
+      </div>
+      <button class="icon-btn" id="btn-motion" type="button" aria-pressed="false" title="Reduce motion" data-magnetic><svg class="ico"><use href="#i-motion"/></svg></button>
+      <button class="icon-btn" id="btn-about" type="button" title="About and credits" data-magnetic><svg class="ico"><use href="#i-info"/></svg></button>
+    </div>
+  </header>
+
+  <main id="view" tabindex="-1">
+    <section class="hero" id="hero">
+      <div class="hero__floaters" id="floaters" aria-hidden="true"></div>
+      <p class="eyebrow">Millions of movies, floating in space</p>
+      <h1 class="hero__title">Find your next <span class="grad">favourite film</span></h1>
+
+      <form class="search" id="search-form" role="search" autocomplete="off">
+        <svg class="ico search__icon"><use href="#i-search"/></svg>
+        <input id="search-input" type="search" name="q" placeholder="Search any movie…" aria-label="Search movies" role="combobox" aria-expanded="false" aria-controls="suggest" aria-autocomplete="list" spellcheck="false" enterkeyhint="search">
+        <span class="spinner" id="search-spinner" hidden></span>
+        <button class="icon-btn search__clear" id="search-clear" type="button" aria-label="Clear search" hidden><svg class="ico"><use href="#i-close"/></svg></button>
+        <kbd class="search__kbd" aria-hidden="true">/</kbd>
+        <ul class="suggest glass" id="suggest" role="listbox" aria-label="Suggestions" hidden></ul>
+      </form>
+
+      <div class="history" id="history" aria-label="Recent searches" hidden></div>
+
+      <div class="hero__actions">
+        <button class="btn btn--glow" id="btn-surprise" type="button" data-magnetic><svg class="ico"><use href="#i-dice"/></svg>Surprise me</button>
+        <button class="btn" id="btn-mood" type="button" aria-expanded="false" aria-controls="mood-tray" data-magnetic><svg class="ico"><use href="#i-mood"/></svg>Mood picker</button>
+      </div>
+      <div class="mood" id="mood-tray" role="group" aria-label="Pick a mood" hidden></div>
+    </section>
+
+    <section class="filters glass" id="filters" aria-label="Filters">
+      <div class="carousel carousel--chips" id="genre-carousel">
+        <div class="carousel__viewport"><div class="carousel__track" id="genre-chips" role="group" aria-label="Genres"></div></div>
+      </div>
+      <div class="filters__row">
+        <label class="field"><span>From year</span><input type="number" id="year-from" min="1900" max="2100" placeholder="1990" inputmode="numeric"></label>
+        <label class="field"><span>To year</span><input type="number" id="year-to" min="1900" max="2100" placeholder="2026" inputmode="numeric"></label>
+        <label class="field field--range"><span>Minimum rating <output id="rating-out">Any</output></span><input type="range" id="rating-min" min="0" max="9" step="0.5" value="0"></label>
+        <label class="field"><span>Sort by</span>
+          <select id="sort">
+            <option value="popularity.desc">Most popular</option>
+            <option value="vote_average.desc">Highest rated</option>
+            <option value="primary_release_date.desc">Newest first</option>
+            <option value="primary_release_date.asc">Oldest first</option>
+            <option value="revenue.desc">Box office</option>
+          </select>
+        </label>
+        <button class="btn btn--ghost" id="filters-reset" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="results" id="results" hidden aria-live="polite">
+      <div class="section-head">
+        <div><h2 id="results-title">Results</h2><p class="muted" id="results-sub"></p></div>
+        <button class="btn btn--ghost" id="results-back" type="button"><svg class="ico"><use href="#i-left"/></svg>Back to home</button>
+      </div>
+      <div class="grid" id="results-grid"></div>
+      <div class="state" id="results-state" hidden></div>
+      <div class="center"><button class="btn" id="load-more" type="button" hidden>Load more</button></div>
+    </section>
+
+    <div id="rows"></div>
+
+    <footer class="footer">
+      <img class="tmdb-logo" alt="TMDB" height="14" data-srcs="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg assets/tmdb-logo.svg">
+      <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      <button class="link" id="btn-about-2" type="button">About and credits</button>
+    </footer>
+  </main>
+
+  <!-- Drop zones that slide in while you drag a poster -->
+  <aside class="dock" id="dock" aria-hidden="true">
+    <div class="dock__zone" data-dropzone="watchlist"><svg class="ico"><use href="#i-bookmark"/></svg><strong>Watchlist</strong><span>Drop to save</span></div>
+    <div class="dock__zone" data-dropzone="favorites"><svg class="ico"><use href="#i-heart"/></svg><strong>Favorites</strong><span>Drop to love</span></div>
+  </aside>
+  <div class="ghost-layer" id="ghost-layer" aria-hidden="true"></div>
+
+  <!-- Movie detail panel (a poster flies into it with a FLIP animation) -->
+  <div class="detail" id="detail" hidden inert aria-hidden="true">
+    <div class="detail__scrim" data-close></div>
+    <section class="detail__panel" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1">
+      <button class="icon-btn detail__close" type="button" data-close aria-label="Close details" data-magnetic><svg class="ico"><use href="#i-close"/></svg></button>
+      <div class="detail__hero"><img class="detail__backdrop" alt="" draggable="false"><div class="detail__fade"></div></div>
+      <div class="detail__body">
+        <div class="detail__left">
+          <div class="detail__poster" id="detail-poster"></div>
+          <div class="detail__actions">
+            <button class="btn btn--sm" id="d-watch" type="button" aria-pressed="false"><svg class="ico"><use href="#i-bookmark"/></svg><span>Watchlist</span></button>
+            <button class="btn btn--sm" id="d-fav" type="button" aria-pressed="false"><svg class="ico"><use href="#i-heart"/></svg><span>Favorite</span></button>
+          </div>
+        </div>
+        <div class="detail__right" id="detail-content"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Watchlist / Favorites drawer -->
+  <div class="scrim" id="drawer-scrim" hidden></div>
+  <aside class="drawer glass" id="drawer" hidden inert aria-label="Your library">
+    <header class="drawer__head">
+      <div class="seg" role="tablist" aria-label="Library list">
+        <button type="button" role="tab" data-tab="watchlist" aria-selected="true">Watchlist</button>
+        <button type="button" role="tab" data-tab="favorites" aria-selected="false">Favorites</button>
+      </div>
+      <button class="icon-btn" id="drawer-close" type="button" aria-label="Close library"><svg class="ico"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="drawer__list" id="drawer-list"></div>
+    <footer class="drawer__foot"><button class="btn" id="btn-export" type="button"><svg class="ico"><use href="#i-download"/></svg>Export to JSON</button></footer>
+  </aside>
+
+  <!-- About / credits -->
+  <div class="modal" id="about" hidden inert>
+    <div class="modal__scrim" data-close></div>
+    <section class="modal__card glass" role="dialog" aria-modal="true" aria-labelledby="about-title" tabindex="-1">
+      <button class="icon-btn modal__close" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+      <h2 id="about-title">About and credits</h2>
+      <p>CineFloat is a floating-poster movie browser made with vanilla HTML, CSS and JavaScript, packaged with Electron.</p>
+      <div class="credit">
+        <img class="tmdb-logo" alt="TMDB" height="22" data-srcs="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg assets/tmdb-logo.svg">
+        <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      </div>
+      <p class="muted">Movie data and images are provided by TMDB. Streaming availability data is provided by JustWatch.</p>
+      <h3>Keyboard</h3>
+      <dl class="keys">
+        <div><dt><kbd>/</kbd></dt><dd>Focus search</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close suggestions, panel or dialog</dd></div>
+        <div><dt><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></dt><dd>Move between posters (or between movies inside the panel)</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>Open the focused poster</dd></div>
+      </dl>
+      <h3>Gestures</h3>
+      <p class="muted">Click a poster to open it. Drag one (or press and hold on touch screens) to throw it, and drop it on Watchlist or Favorites to save it. Drag or swipe the rows; use Shift + mouse wheel for sideways scrolling.</p>
+      <p class="muted" id="about-version"></p>
+    </section>
+  </div>
+
+  <!-- Shown when config.js is missing or the token is wrong -->
+  <div class="setup" id="setup" hidden>
+    <section class="setup__card glass">
+      <h2 id="setup-title">Add your TMDB token</h2>
+      <p id="setup-text">CineFloat needs a free TMDB <strong>API Read Access Token</strong>.</p>
+      <ol>
+        <li>Create a free account and open <strong>themoviedb.org → Settings → API</strong>.</li>
+        <li>Copy the long <em>API Read Access Token</em> (it starts with <code>eyJ</code>).</li>
+        <li>Copy <code>config.example.js</code> to <code>config.js</code> and paste the token inside.</li>
+        <li>Reload this page (or restart the app).</li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/colors.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/animator.js"></script>
+  <script src="js/dragthrow.js"></script>
+  <script src="js/carousel.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/library.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/explore.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

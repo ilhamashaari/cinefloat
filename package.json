@@ -1,0 +1,17 @@
+{
+  "name": "cinefloat",
+  "productName": "CineFloat",
+  "version": "1.0.0",
+  "description": "A floating-poster movie search app powered by the TMDB API (Electron + vanilla JS).",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "electron .",
+    "web": "node scripts/serve.js"
+  },
+  "devDependencies": {
+    "electron": "^45.3.1"
+  }
+}

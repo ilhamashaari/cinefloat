@@ -1,0 +1,210 @@
+/* ==========================================================================
+   base.css — design tokens, themes, reset, animated background, custom
+   cursor and the small reusable components (buttons, chips, glass...).
+
+   RULE OF THUMB used in every stylesheet: we only ever ANIMATE `transform`
+   and `opacity`. Those two run on the GPU, so they stay smooth at 60 fps.
+   Hover colours are done by fading a pseudo-element's opacity.
+   ========================================================================== */
+
+/* ---------- 1. Theme tokens (switch with <html data-theme="...">) ---------- */
+:root,
+[data-theme="dark"] {
+  --bg: #07070d;
+  --text: #f4f4fb;
+  --text-dim: #b6b6cc;
+  --text-mute: #8484a0;
+  --glass: rgba(22, 22, 40, 0.58);
+  --glass-strong: rgba(14, 14, 26, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.13);
+  --chip: rgba(255, 255, 255, 0.07);
+  --chip-hover: rgba(255, 255, 255, 0.15);
+  --accent: #8b7bff;
+  --accent-2: #ff5ea8;
+  --accent-3: #37d5ff;
+  --good: #3ddc97;
+  --warn: #ffc857;
+  --bad: #ff6b81;
+  --ring-track: rgba(255, 255, 255, 0.13);
+  --shadow: 0 22px 50px -20px rgba(0, 0, 0, 0.85);
+  --scrim: rgba(3, 3, 9, 0.66);
+  --bg-strength: 0.78;
+  --vignette: rgba(0, 0, 0, 0.55);
+  --grain: 0.07;
+  --scroll-thumb: rgba(255, 255, 255, 0.22);
+  color-scheme: dark;                 /* dark scrollbars, select pop-ups and form controls (AMOLED inherits it) */
+}
+[data-theme="light"] {
+  --bg: #f3f2fb;
+  --text: #15152b;
+  --text-dim: #444466;
+  --text-mute: #73739a;
+  --glass: rgba(255, 255, 255, 0.64);
+  --glass-strong: rgba(255, 255, 255, 0.93);
+  --glass-border: rgba(30, 30, 80, 0.13);
+  --chip: rgba(30, 30, 80, 0.07);
+  --chip-hover: rgba(30, 30, 80, 0.14);
+  --ring-track: rgba(30, 30, 80, 0.14);
+  --shadow: 0 22px 50px -22px rgba(50, 40, 120, 0.38);
+  --scrim: rgba(236, 234, 250, 0.66);
+  --bg-strength: 0.5;
+  --vignette: rgba(120, 110, 190, 0.18);
+  --grain: 0.05;
+  --scroll-thumb: rgba(40, 40, 100, 0.28);
+  color-scheme: light;
+}
+[data-theme="amoled"] {
+  --bg: #000;
+  --glass: rgba(10, 10, 16, 0.72);
+  --glass-strong: #050509;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --scrim: rgba(0, 0, 0, 0.78);
+  --bg-strength: 0.42;
+  --vignette: rgba(0, 0, 0, 0.7);
+  --grain: 0.04;
+}
+
+/* ---------- 2. Reset + page ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+/* Slim scrollbars in the theme's colours (the browser default is a bright grey bar on Windows and Linux). */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;           /* no layout shift when the panel locks scrolling */
+  background: var(--bg);
+}
+html.panel-open, html.modal-open { overflow: hidden; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font: 400 16px/1.55 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3 { font-family: "Segoe UI Variable Display", "Avenir Next", "Segoe UI", system-ui, sans-serif; letter-spacing: -0.02em; line-height: 1.1; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+ul { list-style: none; margin: 0; padding: 0; }
+kbd { font: 600 0.75rem/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 0.25rem 0.45rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--chip); }
+code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; padding: 0.1em 0.4em; border-radius: 6px; background: var(--chip); }
+:focus-visible { outline: 2px solid var(--accent-3); outline-offset: 3px; border-radius: 8px; }
+[hidden] { display: none !important; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ico { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ico .fill, symbol .fill { fill: currentColor; }
+.muted { color: var(--text-dim); }
+.center { display: flex; justify-content: center; margin-top: 1.5rem; }
+.skip { position: fixed; left: 1rem; top: -4rem; z-index: 20000; padding: 0.6rem 1rem; border-radius: 10px; background: var(--glass-strong); }
+.skip:focus { top: 1rem; }
+.grad { background: linear-gradient(110deg, var(--accent-3), var(--accent) 45%, var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- 3. Animated background (two layers cross-fade = opacity only) ---------- */
+.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); contain: strict; }
+.bg__layer { position: absolute; inset: 0; opacity: 0; transition: opacity 1.6s ease; }
+.bg__layer.is-on { opacity: var(--bg-strength); }
+.bg__blob {
+  position: absolute; width: 72vmax; height: 72vmax; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--c) 0%, transparent 100%);
+  will-change: transform; animation: drift 40s ease-in-out infinite alternate;
+}
+.b1 { left: -18vmax; top: -24vmax; --c: var(--c1, #5b4bff); }
+.b2 { right: -24vmax; top: 6vmax; --c: var(--c2, #ff4fa3); animation-duration: 52s; animation-delay: -14s; }
+.b3 { left: 14vmax; bottom: -36vmax; --c: var(--c3, #20c9ff); animation-duration: 64s; animation-delay: -28s; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(7vmax, 4vmax, 0) scale(1.14); }
+  to   { transform: translate3d(-6vmax, 8vmax, 0) scale(0.94); }
+}
+.bg__grain {
+  position: absolute; inset: 0; opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.bg__vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 28%, transparent 38%, var(--vignette) 100%); }
+html.panel-open .bg__blob { animation-play-state: paused; }   /* saves GPU while the glass panel is open */
+
+/* ---------- 4. Custom cursor (JS adds .has-cursor only for mouse / trackpad) ---------- */
+.cursor { position: fixed; left: 0; top: 0; z-index: 10000; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+html.has-cursor .cursor { opacity: 1; }
+html.has-cursor.cursor-hidden .cursor { opacity: 0; }
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+html.has-cursor input, html.has-cursor select { cursor: text !important; }
+html.has-cursor iframe { cursor: auto !important; }
+.cursor__ring {
+  position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 18px rgba(139, 123, 255, 0.35);
+  display: grid; place-items: center; will-change: transform;
+}
+.cursor__dot { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); will-change: transform; }
+.cursor__label { font: 700 9px/1 system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; opacity: 0; transform: scale(calc(1 / var(--s, 1))); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); white-space: nowrap; transition: opacity 0.2s; }
+.cursor.has-label .cursor__label { opacity: 1; }
+[data-theme="light"] .cursor__ring { border-color: rgba(30, 20, 90, 0.75); }
+[data-theme="light"] .cursor__dot { background: #2a1f7a; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6); }
+
+/* ---------- 5. Glass + reusable controls ---------- */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+/* Buttons, pills, icon buttons and chips all share this "fade a pseudo-element" hover trick */
+.btn, .pill, .icon-btn, .chip, .seg button, .link { position: relative; isolation: isolate; }
+.btn::before, .pill::before, .icon-btn::before, .chip::before, .seg button::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+  background: var(--chip-hover); opacity: 0; transition: opacity 0.25s;
+}
+.btn:hover::before, .pill:hover::before, .icon-btn:hover::before, .chip:hover::before, .seg button:hover::before,
+.btn:focus-visible::before, .icon-btn:focus-visible::before { opacity: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.55em;
+  padding: 0.78em 1.3em; border-radius: 999px; border: 1px solid var(--glass-border);
+  background: var(--chip); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.01em; white-space: nowrap;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn:active { transform: scale(0.96); }
+.btn--sm { padding: 0.6em 1em; font-size: 0.85rem; }
+.btn--ghost { background: transparent; }
+.btn--glow { border-color: transparent; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 10px 30px -10px var(--accent); }
+.btn--glow::before { background: rgba(255, 255, 255, 0.22); }
+.btn[aria-pressed="true"] { border-color: transparent; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; }
+.btn[disabled] { opacity: 0.55; pointer-events: none; }
+
+.icon-btn { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; color: var(--text); border: 1px solid transparent; }
+.icon-btn[aria-pressed="true"] { color: var(--accent-3); border-color: var(--accent-3); }
+.icon-btn .ico { width: 1.2rem; height: 1.2rem; }
+
+.pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 999px; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--glass-border); background: var(--chip); }
+.count { font-style: normal; min-width: 1.4rem; padding: 0.05rem 0.4rem; text-align: center; font-size: 0.75rem; border-radius: 999px; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; }
+.count[data-zero="true"] { opacity: 0.45; }
+
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; border: 1px solid var(--glass-border); background: var(--chip); }
+.seg button { display: grid; place-items: center; min-width: 2.1rem; height: 2.1rem; padding: 0 0.8rem; border-radius: 999px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); }
+.seg button::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: linear-gradient(120deg, var(--accent), var(--accent-2)); opacity: 0; transition: opacity 0.25s; }
+.seg button[aria-checked="true"], .seg button[aria-selected="true"] { color: #fff; }
+.seg button[aria-checked="true"]::after, .seg button[aria-selected="true"]::after { opacity: 1; }
+
+.chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid var(--glass-border); background: var(--chip); font-size: 0.88rem; font-weight: 600; white-space: nowrap; color: var(--text-dim); }
+.chip::after { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; background: linear-gradient(120deg, var(--accent), var(--accent-2)); opacity: 0; transition: opacity 0.25s; }
+.chip[aria-pressed="true"] { color: #fff; border-color: transparent; }
+.chip[aria-pressed="true"]::after { opacity: 1; }
+.chip .x { opacity: 0.6; font-weight: 700; }
+
+.link { color: var(--accent-3); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--glass-border); border-top-color: var(--accent-3); animation: spin 0.8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 6. Reduce motion (toggle in the top bar, or the OS setting) ---------- */
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important;
+}
+html[data-motion="reduced"] .spinner { animation: spin 1.6s linear infinite !important; }
+html[data-motion="reduced"] .card__float, html[data-motion="reduced"] .floaty { animation: none !important; }
+html[data-motion="reduced"] .bg__layer { transition-duration: 0.3s !important; }

@@ -1,0 +1,14 @@
+# Secrets — your TMDB token lives here, NEVER commit it
+config.js
+
+# Dependencies and build output
+node_modules/
+dist/
+out/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
