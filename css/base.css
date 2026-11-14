@@ -16,6 +16,7 @@
   --text-mute: #8484a0;
   --glass: rgba(22, 22, 40, 0.58);
   --glass-strong: rgba(14, 14, 26, 0.9);
+  --pop-bg: rgba(16, 16, 30, 0.985);     /* drop-down lists: almost solid, nothing shows through */
   --glass-border: rgba(255, 255, 255, 0.13);
   --chip: rgba(255, 255, 255, 0.07);
   --chip-hover: rgba(255, 255, 255, 0.15);
@@ -41,6 +42,7 @@
   --text-mute: #73739a;
   --glass: rgba(255, 255, 255, 0.64);
   --glass-strong: rgba(255, 255, 255, 0.93);
+  --pop-bg: rgba(255, 255, 255, 0.985);
   --glass-border: rgba(30, 30, 80, 0.13);
   --chip: rgba(30, 30, 80, 0.07);
   --chip-hover: rgba(30, 30, 80, 0.14);
@@ -57,6 +59,7 @@
   --bg: #000;
   --glass: rgba(10, 10, 16, 0.72);
   --glass-strong: #050509;
+  --pop-bg: #050509;
   --glass-border: rgba(255, 255, 255, 0.1);
   --scrim: rgba(0, 0, 0, 0.78);
   --bg-strength: 0.42;
